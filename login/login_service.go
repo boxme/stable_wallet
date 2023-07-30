@@ -1,6 +1,8 @@
 package login
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"stable_wallet/main/config"
+)
 
 type LoginUser struct {
 	Id    uint64
@@ -13,12 +15,12 @@ type LoginService interface {
 }
 
 type loginService struct {
-	Db *pgxpool.Pool
+	app *config.App
 }
 
-func CreateLoginService(db *pgxpool.Pool) LoginService {
+func CreateLoginService(app *config.App) LoginService {
 	return &loginService{
-		Db: db,
+		app: app,
 	}
 }
 

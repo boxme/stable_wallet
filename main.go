@@ -37,5 +37,15 @@ func run() error {
 	}
 
 	port := ":" + strconv.Itoa((cfg.Port))
-	return http.ListenAndServe(port, server)
+	srv := &http.Server{
+		Addr:     port,
+		Handler:  server,
+		ErrorLog: server.App.ErrorLog,
+	}
+	server.App.InfoLog.Printf("Starting server on %s", port)
+	err = srv.ListenAndServe()
+	if err != nil {
+		server.App.ErrorLog.Fatal(err)
+	}
+	return err
 }
