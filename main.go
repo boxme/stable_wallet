@@ -30,7 +30,7 @@ func run() error {
 	}
 	defer dbpool.Close()
 
-	server, err := server.CreateNewServer(dbpool)
+	server, err := server.CreateServer(dbpool)
 	server.StartRouting()
 	if err != nil {
 		return err

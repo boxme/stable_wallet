@@ -11,7 +11,7 @@ type Server struct {
 	Db  *pgxpool.Pool
 }
 
-func CreateNewServer(db *pgxpool.Pool) (*Server, error) {
+func CreateServer(db *pgxpool.Pool) (*Server, error) {
 	server := &Server{
 		Mux: http.NewServeMux(),
 		Db:  db,
