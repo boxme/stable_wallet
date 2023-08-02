@@ -8,8 +8,10 @@ import (
 	"os"
 	"stable_wallet/main/server"
 	"strconv"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -38,9 +40,12 @@ func run() error {
 
 	port := ":" + strconv.Itoa((cfg.Port))
 	srv := &http.Server{
-		Addr:     port,
-		Handler:  server,
-		ErrorLog: server.App.ErrorLog,
+		Addr:         port,
+		Handler:      server.App.LogRequest(server),
+		ErrorLog:     server.App.ErrorLog,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	server.App.InfoLog.Printf("Starting server on %s", port)
 	err = srv.ListenAndServe()
