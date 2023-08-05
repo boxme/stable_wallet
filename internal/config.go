@@ -30,8 +30,11 @@ func (app *App) ServerError(w http.ResponseWriter, r *http.Request, err error) {
 // The clientError helper sends a specific status code and corresponding description
 // to the user. We'll use this later in the book to send responses like 400 "Bad
 // Request" when there's a problem with the request that the user sent.
-func (app *App) ClientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
+func (app *App) BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.logError(r, err)
+
+	message := "The request received is not valid"
+	app.errorResponse(w, r, http.StatusBadRequest, message)
 }
 
 // For consistency, we'll also implement a notFound helper. This is simply a

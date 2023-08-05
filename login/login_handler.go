@@ -29,12 +29,12 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 			lh.app.ErrorLog.Printf("using wrong restful method in user login %s", r.Method)
 
 			w.Header().Set("Allow", http.MethodPost)
-			lh.app.ClientError(w, http.StatusMethodNotAllowed)
+			lh.app.MethodNotAllowed(w, r)
 			return
 		}
 
 		if err := r.ParseForm(); err != nil {
-			lh.app.ClientError(w, http.StatusBadRequest)
+			lh.app.BadRequestResponse(w, r, err)
 			return
 		}
 
