@@ -1,29 +1,24 @@
 package login
 
 import (
-	"stable_wallet/main/config"
+	app "stable_wallet/main/internal"
+	"stable_wallet/main/internal/data"
 )
 
-type LoginUser struct {
-	Id    uint64
-	Email string
-	Token string
-}
-
 type LoginService interface {
-	Login(email string, hashPassword string, idemKey string) (*LoginUser, error)
+	Login(email string, hashPassword string, idemKey string) (*data.User, error)
 }
 
 type loginService struct {
-	app *config.App
+	app *app.App
 }
 
-func CreateLoginService(app *config.App) LoginService {
+func CreateLoginService(app *app.App) LoginService {
 	return &loginService{
 		app: app,
 	}
 }
 
-func (ls *loginService) Login(email string, hashPassword string, idemKey string) (*LoginUser, error) {
+func (ls *loginService) Login(email string, hashPassword string, idemKey string) (*data.User, error) {
 	return nil, nil
 }

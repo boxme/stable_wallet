@@ -1,4 +1,4 @@
-package config
+package internal
 
 import (
 	"fmt"
@@ -17,12 +17,14 @@ type App struct {
 
 // The serverError helper writes an error message and stack trace to the errorLog,
 // then sends a generic 500 Internal Server Error response to the user.
-func (app *App) ServerError(w http.ResponseWriter, err error) {
+func (app *App) ServerError(w http.ResponseWriter, r *http.Request, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	// To show where the error originated from
 	app.ErrorLog.Output(2, trace)
+	app.logError(r, err)
 
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	message := "the server encountered a problem and could not process your request"
+	app.errorResponse(w, r, http.StatusInternalServerError, message)
 }
 
 // The clientError helper sends a specific status code and corresponding description
@@ -35,8 +37,14 @@ func (app *App) ClientError(w http.ResponseWriter, status int) {
 // For consistency, we'll also implement a notFound helper. This is simply a
 // convenience wrapper around clientError which sends a 404 Not Found response to
 // the user.
-func (app *App) NotFound(w http.ResponseWriter) {
-	app.ClientError(w, http.StatusNotFound)
+func (app *App) NotFound(w http.ResponseWriter, r *http.Request) {
+	message := "the requested resource could not be found"
+	app.errorResponse(w, r, http.StatusNotFound, message)
+}
+
+func (app *App) MethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	message := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
+	app.errorResponse(w, r, http.StatusMethodNotAllowed, message)
 }
 
 // Wrap the handler with a logging handler
@@ -46,4 +54,19 @@ func (app *App) LogRequest(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (app *App) errorResponse(
+	w http.ResponseWriter, r *http.Request, status int, message interface{}) {
+	env := envelope{"error": message}
+
+	err := app.writeJSON(w, status, env, nil)
+	if err != nil {
+		app.logError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (app *App) logError(r *http.Request, err error) {
+	app.ErrorLog.Println(err)
 }

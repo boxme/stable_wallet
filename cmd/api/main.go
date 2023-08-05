@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"stable_wallet/main/remote"
 	"stable_wallet/main/server"
 	"strconv"
 	"time"
@@ -25,7 +26,7 @@ func run() error {
 	boolPointer := flag.Bool("prod", false, "Provide true for this flag in production")
 	flag.Parse()
 
-	cfg := LoadConfig(*boolPointer)
+	cfg := remote.LoadConfig(*boolPointer)
 	dbpool, err := pgxpool.New(context.Background(), cfg.Database.GetDbConnectionString())
 	if err != nil {
 		return err

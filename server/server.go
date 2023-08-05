@@ -4,14 +4,14 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"stable_wallet/main/config"
+	app "stable_wallet/main/internal"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Server struct {
 	Mux *http.ServeMux
-	App *config.App
+	App *app.App
 }
 
 func CreateServer(db *pgxpool.Pool) (*Server, error) {
@@ -19,7 +19,7 @@ func CreateServer(db *pgxpool.Pool) (*Server, error) {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	server := &Server{
 		Mux: http.NewServeMux(),
-		App: &config.App{
+		App: &app.App{
 			Db:       db,
 			ErrorLog: errorLog,
 			InfoLog:  infoLog,

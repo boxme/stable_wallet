@@ -3,17 +3,17 @@ package login
 import (
 	"fmt"
 	"net/http"
-	"stable_wallet/main/config"
+	app "stable_wallet/main/internal"
 	"strings"
 	"unicode/utf8"
 )
 
 type LoginHandler struct {
-	app     *config.App
+	app     *app.App
 	service LoginService
 }
 
-func CreateLoginHandler(app *config.App) *LoginHandler {
+func CreateLoginHandler(app *app.App) *LoginHandler {
 	logingService := CreateLoginService(app)
 	return &LoginHandler{
 		app:     app,
@@ -60,6 +60,7 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		lh.app.InfoLog.Printf("handling user login successful")
 	}
