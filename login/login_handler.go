@@ -1,9 +1,9 @@
 package login
 
 import (
-	"fmt"
 	"net/http"
 	app "stable_wallet/main/internal"
+	"stable_wallet/main/internal/validator"
 	"strings"
 	"unicode/utf8"
 )
@@ -22,6 +22,9 @@ func CreateLoginHandler(app *app.App) *LoginHandler {
 }
 
 func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
+	// Initialize a new Validator instance.
+	v := validator.New()
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		lh.app.InfoLog.Printf("handling user login...")
 
@@ -38,26 +41,17 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 			return
 		}
 
-		// login
-		errors := make(map[string]string)
-
 		email := r.PostForm.Get("email")
-		if strings.TrimSpace(email) == "" {
-			errors["email"] = "Email is not provided"
-		} else if utf8.RuneCountInString(email) > 100 {
-			errors["email"] = "Email is too long"
-		}
+		v.Check(strings.TrimSpace(email) != "", "email", "Email is not provided")
+		v.Check(utf8.RuneCountInString(email) <= 100, "email", "Email is too long")
+		v.Check(validator.Matches(email, validator.EmailRX), "email", "Email is not valid")
 
 		password := r.PostForm.Get("password")
-		if strings.TrimSpace(password) == "" {
-			errors["password"] = "Password is not provided"
-		} else if utf8.RuneCountInString(password) > 100 {
-			errors["password"] = "Password is too long"
-		}
+		v.Check(strings.TrimSpace(password) != "", "password", "Password is not provided")
+		v.Check(utf8.RuneCountInString(password) <= 100, "password", "Password is too long")
 
-		if len(errors) > 0 {
-			fmt.Fprint(w, errors)
-			return
+		if !v.Valid() {
+			lh.app.FailedValidationResponse(w, r, v.Errors)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

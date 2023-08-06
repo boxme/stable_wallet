@@ -59,6 +59,12 @@ func (app *App) LogRequest(next http.Handler) http.Handler {
 	})
 }
 
+// Note that the errors parameter here has the type map[string]string, which is exactly
+// the same as the errors map contained in our Validator type.
+func (app *App) FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
+}
+
 func (app *App) errorResponse(
 	w http.ResponseWriter, r *http.Request, status int, message interface{}) {
 	env := envelope{"error": message}
