@@ -2,7 +2,7 @@ package login
 
 import (
 	"net/http"
-	app "stable_wallet/main/internal"
+	"stable_wallet/main/internal/app"
 	"stable_wallet/main/internal/validator"
 	"strings"
 	"unicode/utf8"

@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	app "stable_wallet/main/internal"
+	"stable_wallet/main/internal/app"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
