@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"stable_wallet/main/remote"
-	"stable_wallet/main/server"
 	"strconv"
 	"time"
 
@@ -33,8 +32,8 @@ func run() error {
 	}
 	defer dbpool.Close()
 
-	server, err := server.CreateServer(dbpool)
-	server.StartRouting()
+	server, err := createServer(dbpool)
+	server.startRouting()
 	if err != nil {
 		return err
 	}

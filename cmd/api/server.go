@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"log"
@@ -14,7 +14,7 @@ type Server struct {
 	App *app.App
 }
 
-func CreateServer(db *pgxpool.Pool) (*Server, error) {
+func createServer(db *pgxpool.Pool) (*Server, error) {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	server := &Server{

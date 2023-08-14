@@ -1,8 +1,10 @@
 package login
 
 import (
+	"context"
 	app "stable_wallet/main/internal"
 	"stable_wallet/main/internal/data"
+	"time"
 )
 
 type LoginService interface {
@@ -20,5 +22,11 @@ func CreateLoginService(app *app.App) LoginService {
 }
 
 func (ls *loginService) Login(email string, hashPassword string, idemKey string) (*data.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if ctx != nil {
+
+	}
 	return nil, nil
 }
