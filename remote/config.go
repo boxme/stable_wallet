@@ -55,8 +55,8 @@ func getDevDbConfig() DbConfig {
 	return DbConfig{
 		Host:     "localhost",
 		Port:     5432,
-		User:     "dev_group",
-		Password: "Ab123456!",
+		User:     "dev",
+		Password: "honeybbee8988",
 		DbName:   "stable_wallet",
 	}
 }

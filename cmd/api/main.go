@@ -44,8 +44,8 @@ func run() error {
 		Handler:      server.App.LogRequest(server),
 		ErrorLog:     server.App.ErrorLog,
 		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 	server.App.InfoLog.Printf("Starting server on %s", port)
 	err = srv.ListenAndServe()

@@ -46,6 +46,9 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 		v.Check(utf8.RuneCountInString(email) <= 100, "email", "Email is too long")
 		v.Check(validator.Matches(email, validator.EmailRX), "email", "Email is not valid")
 
+		mobileNumber := r.PostForm.Get("mobile_number")
+		v.Check(strings.TrimSpace(mobileNumber) != "", "mobile_number", "Mobile number is not provided")
+
 		password := r.PostForm.Get("password")
 		v.Check(strings.TrimSpace(password) != "", "password", "Password is not provided")
 		v.Check(utf8.RuneCountInString(password) <= 100, "password", "Password is too long")
