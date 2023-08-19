@@ -21,7 +21,7 @@ func CreateLoginService(app *app.App) LoginService {
 	}
 }
 
-func (ls *loginService) Login(email string, hashPassword string, idemKey string) (*data.User, error) {
+func (ls *loginService) Login(mobileNumber string, hashPassword string, idemKey string) (*data.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 

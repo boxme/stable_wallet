@@ -62,12 +62,12 @@ func getDevDbConfig() DbConfig {
 }
 
 func (c *DbConfig) GetDbConnectionString() string {
-	// databaseUrl := "postgres://postgres:mypassword@localhost:5432/postgres"
+	// databaseUrl := "postgres://user:password@host:post/dbname"
 	return fmt.Sprintf(
-		"%s://%s:%s@localhost:%d/%s",
-		c.Host,
+		"postgres://%s:%s@%s:%d/%s",
 		c.User,
 		c.Password,
+		c.Host,
 		c.Port,
 		c.DbName)
 }
