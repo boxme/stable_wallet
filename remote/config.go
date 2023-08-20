@@ -52,6 +52,7 @@ func devConfig() Config {
 }
 
 func getDevDbConfig() DbConfig {
+	// postgres://dev:honeybbee8988@localhost:5432/stable_wallet?sslmode=disable
 	return DbConfig{
 		Host:     "localhost",
 		Port:     5432,

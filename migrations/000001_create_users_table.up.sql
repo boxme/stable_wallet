@@ -1,4 +1,9 @@
-CREATE TABLE IF NOT EXISTS users {
+CREATE TABLE IF NOT EXISTS countries (
+    country_code integer PRIMARY KEY,
+    country_name text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
     id bigserial PRIMARY KEY,
     phone_number integer NOT NULL,
     country_code integer NOT NULL,
@@ -7,4 +12,4 @@ CREATE TABLE IF NOT EXISTS users {
     created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
     email citext,
     CONSTRAINT fk_country_code FOREIGN KEY(country_code) REFERENCES countries(country_code)
-};
+);
