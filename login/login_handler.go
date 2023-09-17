@@ -48,7 +48,7 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 		data.ValidateEmail(v, email)
 
 		mobileNumber := r.PostForm.Get("mobile_number")
-		countryCode, err := strconv.Atoi(r.PostForm.Get("country_code"))
+		countryCode, err := strconv.ParseInt(r.PostForm.Get("country_code"), 10, 64)
 		if err != nil {
 			lh.app.BadRequestResponse(w, r, err)
 			return
@@ -66,7 +66,7 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
-		lh.service.Login(ctx, mobileNumber, password)
+		lh.service.Login(ctx, countryCode, mobileNumber, password)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

@@ -35,6 +35,33 @@ type JwtClaims struct {
 	jwt.RegisteredClaims
 }
 
+func Signup(
+	app app.App,
+	ctx context.Context,
+	countryCode int64,
+	mobileNumber string,
+	passwordPlaintext string) (*User, error) {
+	password, err := Create(passwordPlaintext)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Check against DB and insert new row if allowed
+
+	expirationTime := time.Now().Add(5 * time.Minute)
+	claim := jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(expirationTime),
+	}
+	jwtClaim := &JwtClaims{MobileNumber: mobileNumber, RegisteredClaims: claim}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaim)
+	tokenString, err := token.SignedString(app.JwtSecretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &User{Token: tokenString, Password: password}, nil
+}
+
 func Login(
 	app app.App,
 	ctx context.Context,
@@ -183,7 +210,7 @@ func ValidatePlaintextPassword(v *validator.Validator, password string) {
 	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
 
-func ValidateContactNumber(v *validator.Validator, mobileNumber string, countryCode int) {
+func ValidateContactNumber(v *validator.Validator, mobileNumber string, countryCode int64) {
 	v.Check(countryCode > 0, "country_code", "Country code is invalid")
 	v.Check(strings.TrimSpace(mobileNumber) != "", "mobile_number", "Mobile number is not provided")
 }

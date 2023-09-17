@@ -7,7 +7,8 @@ import (
 )
 
 type LoginService interface {
-	Login(ctx context.Context, mobileNumber string, passwordPlaintext string) (*data.User, error)
+	Login(ctx context.Context, countryCode int64, mobileNumber string, passwordPlaintext string) (*data.User, error)
+	Signup(ctx context.Context, countryCode int64, mobileNumber string, passwordPlaintext string) (*data.User, error)
 }
 
 type loginService struct {
@@ -20,18 +21,40 @@ func CreateLoginService(app *app.App) LoginService {
 	}
 }
 
-func (ls *loginService) Login(
-	ctx context.Context, mobileNumber string, passwordPlaintext string) (*data.User, error) {
+func (ls *loginService) Signup(
+	ctx context.Context,
+	countryCode int64,
+	mobileNumber string,
+	passwordPlaintext string) (*data.User, error) {
 
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		password, err := data.Create(passwordPlaintext)
+		user, err := data.Signup(*ls.app, ctx, countryCode, mobileNumber, passwordPlaintext)
 		if err != nil {
 			return nil, err
 		}
 
-		return nil, nil
+		return user, nil
+	}
+}
+
+func (ls *loginService) Login(
+	ctx context.Context,
+	countryCode int64,
+	mobileNumber string,
+	passwordPlaintext string) (*data.User, error) {
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		user, err := data.Login(*ls.app, ctx, countryCode, mobileNumber, passwordPlaintext)
+		if err != nil {
+			return nil, err
+		}
+
+		return user, nil
 	}
 }
