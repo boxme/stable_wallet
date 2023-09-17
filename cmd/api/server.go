@@ -7,6 +7,7 @@ import (
 	"stable_wallet/main/internal/app"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 type Server struct {
@@ -15,14 +16,21 @@ type Server struct {
 }
 
 func createServer(db *pgxpool.Pool) (*Server, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	server := &Server{
 		Mux: http.NewServeMux(),
 		App: &app.App{
-			Db:       db,
-			ErrorLog: errorLog,
-			InfoLog:  infoLog,
+			JwtSecretKey: []byte(jwtSecretKey),
+			Db:           db,
+			ErrorLog:     errorLog,
+			InfoLog:      infoLog,
 		},
 	}
 

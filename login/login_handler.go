@@ -1,11 +1,14 @@
 package login
 
 import (
+	"context"
 	"net/http"
 	"stable_wallet/main/internal/app"
+	"stable_wallet/main/internal/data"
 	"stable_wallet/main/internal/validator"
+	"strconv"
 	"strings"
-	"unicode/utf8"
+	"time"
 )
 
 type LoginHandler struct {
@@ -42,20 +45,28 @@ func (lh *LoginHandler) HandleLogin() http.HandlerFunc {
 		}
 
 		email := r.PostForm.Get("email")
-		v.Check(strings.TrimSpace(email) != "", "email", "Email is not provided")
-		v.Check(utf8.RuneCountInString(email) <= 100, "email", "Email is too long")
-		v.Check(validator.Matches(email, validator.EmailRX), "email", "Email is not valid")
+		data.ValidateEmail(v, email)
 
 		mobileNumber := r.PostForm.Get("mobile_number")
+		countryCode, err := strconv.Atoi(r.PostForm.Get("country_code"))
+		if err != nil {
+			lh.app.BadRequestResponse(w, r, err)
+			return
+		}
+
+		data.ValidateContactNumber(v, mobileNumber, countryCode)
 		v.Check(strings.TrimSpace(mobileNumber) != "", "mobile_number", "Mobile number is not provided")
 
 		password := r.PostForm.Get("password")
-		v.Check(strings.TrimSpace(password) != "", "password", "Password is not provided")
-		v.Check(utf8.RuneCountInString(password) <= 100, "password", "Password is too long")
+		data.ValidatePlaintextPassword(v, password)
 
 		if !v.Valid() {
 			lh.app.FailedValidationResponse(w, r, v.Errors)
 		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		lh.service.Login(ctx, mobileNumber, password)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

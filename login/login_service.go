@@ -4,11 +4,10 @@ import (
 	"context"
 	"stable_wallet/main/internal/app"
 	"stable_wallet/main/internal/data"
-	"time"
 )
 
 type LoginService interface {
-	Login(email string, hashPassword string, idemKey string) (*data.User, error)
+	Login(ctx context.Context, mobileNumber string, passwordPlaintext string) (*data.User, error)
 }
 
 type loginService struct {
@@ -21,12 +20,18 @@ func CreateLoginService(app *app.App) LoginService {
 	}
 }
 
-func (ls *loginService) Login(mobileNumber string, hashPassword string, idemKey string) (*data.User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+func (ls *loginService) Login(
+	ctx context.Context, mobileNumber string, passwordPlaintext string) (*data.User, error) {
 
-	if ctx != nil {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		password, err := data.Create(passwordPlaintext)
+		if err != nil {
+			return nil, err
+		}
 
+		return nil, nil
 	}
-	return nil, nil
 }

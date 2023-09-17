@@ -10,9 +10,10 @@ import (
 )
 
 type App struct {
-	Db       *pgxpool.Pool
-	ErrorLog *log.Logger
-	InfoLog  *log.Logger
+	JwtSecretKey []byte
+	Db           *pgxpool.Pool
+	ErrorLog     *log.Logger
+	InfoLog      *log.Logger
 }
 
 // The serverError helper writes an error message and stack trace to the errorLog,
