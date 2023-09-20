@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,7 +23,7 @@ type User struct {
 	Activated   bool      `json:"activated"`
 	CountryCode int       `json:"country_code"`
 	Password    password  `json:"-"`
-	PhoneNumber int       `json:"phone_number"`
+	PhoneNumber string    `json:"phone_number"`
 }
 
 type password struct {
@@ -38,7 +39,7 @@ type JwtClaims struct {
 func Signup(
 	app app.App,
 	ctx context.Context,
-	countryCode int64,
+	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*User, error) {
 	password, err := Create(passwordPlaintext)
@@ -46,7 +47,17 @@ func Signup(
 		return nil, err
 	}
 
-	// TODO: Check against DB and insert new row if allowed
+	query := `INSERT INTO users (phone_number, country_code, password_hash) VALUES (@phoneNumber, @countryCode, @passwordHash) RETURNING id;`
+	args := pgx.NamedArgs{
+		"phoneNumber":  mobileNumber,
+		"countryCode":  countryCode,
+		"passwordHash": password}
+
+	var userId uint64
+	err = app.Db.QueryRow(ctx, query, args).Scan(&userId)
+	if err != nil {
+		return nil, err
+	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claim := jwt.RegisteredClaims{
@@ -59,13 +70,13 @@ func Signup(
 		return nil, err
 	}
 
-	return &User{Token: tokenString, Password: password}, nil
+	return &User{Id: userId, Token: tokenString, CountryCode: countryCode, PhoneNumber: mobileNumber}, nil
 }
 
 func Login(
 	app app.App,
 	ctx context.Context,
-	countryCode int64,
+	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*User, error) {
 
@@ -74,7 +85,17 @@ func Login(
 		return nil, err
 	}
 
-	// TODO Check against DB
+	query := `SELECT id FROM users WHERE phone_number = @phoneNumber AND country_code = @countryCode AND password_hash = @passwordHash;`
+	args := pgx.NamedArgs{
+		"phoneNumber":  mobileNumber,
+		"countryCode":  countryCode,
+		"passwordHash": password}
+
+	var userId uint64
+	err = app.Db.QueryRow(ctx, query, args).Scan(&userId)
+	if err != nil {
+		return nil, err
+	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claim := jwt.RegisteredClaims{
@@ -87,7 +108,7 @@ func Login(
 		return nil, err
 	}
 
-	return &User{Token: tokenString, Password: password}, nil
+	return &User{Id: userId, Token: tokenString, CountryCode: countryCode, PhoneNumber: mobileNumber}, nil
 }
 
 func Create(plaintextPassword string) (password, error) {
@@ -210,7 +231,7 @@ func ValidatePlaintextPassword(v *validator.Validator, password string) {
 	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
 
-func ValidateContactNumber(v *validator.Validator, mobileNumber string, countryCode int64) {
+func ValidateContactNumber(v *validator.Validator, mobileNumber string, countryCode int) {
 	v.Check(countryCode > 0, "country_code", "Country code is invalid")
 	v.Check(strings.TrimSpace(mobileNumber) != "", "mobile_number", "Mobile number is not provided")
 }

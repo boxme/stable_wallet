@@ -7,8 +7,8 @@ import (
 )
 
 type LoginService interface {
-	Login(ctx context.Context, countryCode int64, mobileNumber string, passwordPlaintext string) (*data.User, error)
-	Signup(ctx context.Context, countryCode int64, mobileNumber string, passwordPlaintext string) (*data.User, error)
+	Login(ctx context.Context, countryCode int, mobileNumber string, passwordPlaintext string) (*data.User, error)
+	Signup(ctx context.Context, countryCode int, mobileNumber string, passwordPlaintext string) (*data.User, error)
 }
 
 type loginService struct {
@@ -23,7 +23,7 @@ func CreateLoginService(app *app.App) LoginService {
 
 func (ls *loginService) Signup(
 	ctx context.Context,
-	countryCode int64,
+	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*data.User, error) {
 
@@ -42,7 +42,7 @@ func (ls *loginService) Signup(
 
 func (ls *loginService) Login(
 	ctx context.Context,
-	countryCode int64,
+	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*data.User, error) {
 
