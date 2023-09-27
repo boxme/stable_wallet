@@ -18,7 +18,7 @@ type Server struct {
 func createServer(db *pgxpool.Pool) (*Server, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file", err)
 	}
 
 	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")

@@ -9,4 +9,5 @@ func (s *Server) startRouting() {
 
 	loginHandler := login.CreateLoginHandler(s.App)
 	s.Mux.HandleFunc("/user/login", loginHandler.HandleLogin())
+	s.Mux.HandleFunc("/user/signup", loginHandler.HandleSignup())
 }

@@ -26,11 +26,13 @@ func run() error {
 	flag.Parse()
 
 	cfg := remote.LoadConfig(*boolPointer)
-	dbpool, err := pgxpool.New(context.Background(), cfg.Database.GetDbConnectionString())
+	dbConfigString := cfg.Database.GetDbConnectionString()
+	dbpool, err := pgxpool.New(context.Background(), dbConfigString)
 	if err != nil {
 		return err
 	}
 	defer dbpool.Close()
+	fmt.Printf("Loaded database successfully using config %s\n", dbConfigString)
 
 	server, err := createServer(dbpool)
 	server.startRouting()

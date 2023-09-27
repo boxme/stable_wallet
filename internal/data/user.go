@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/mail"
 	"stable_wallet/main/internal/app"
 	"stable_wallet/main/internal/validator"
 	"strings"
@@ -39,6 +40,7 @@ type JwtClaims struct {
 func Signup(
 	app app.App,
 	ctx context.Context,
+	email string,
 	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*User, error) {
@@ -47,11 +49,12 @@ func Signup(
 		return nil, err
 	}
 
-	query := `INSERT INTO users (phone_number, country_code, password_hash) VALUES (@phoneNumber, @countryCode, @passwordHash) RETURNING id;`
+	query := `INSERT INTO users (phone_number, country_code, password_hash, email, activated) VALUES (@phoneNumber, @countryCode, @passwordHash, @email, true) RETURNING id;`
 	args := pgx.NamedArgs{
 		"phoneNumber":  mobileNumber,
 		"countryCode":  countryCode,
-		"passwordHash": password}
+		"passwordHash": password.hash,
+		"email":        email}
 
 	var userId uint64
 	err = app.Db.QueryRow(ctx, query, args).Scan(&userId)
@@ -70,31 +73,42 @@ func Signup(
 		return nil, err
 	}
 
-	return &User{Id: userId, Token: tokenString, CountryCode: countryCode, PhoneNumber: mobileNumber}, nil
+	return &User{
+		Id:          userId,
+		Email:       email,
+		Token:       tokenString,
+		Activated:   true,
+		CountryCode: countryCode,
+		PhoneNumber: mobileNumber}, nil
 }
 
 func Login(
 	app app.App,
 	ctx context.Context,
+	email string,
 	countryCode int,
 	mobileNumber string,
 	passwordPlaintext string) (*User, error) {
 
-	password, err := Create(passwordPlaintext)
+	query := `SELECT id, password_hash FROM users WHERE phone_number = @phoneNumber AND country_code = @countryCode;`
+	args := pgx.NamedArgs{
+		"phoneNumber": mobileNumber,
+		"countryCode": countryCode}
+
+	var userId uint64
+	var hashedPassword string
+	err := app.Db.QueryRow(ctx, query, args).Scan(&userId, &hashedPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	query := `SELECT id FROM users WHERE phone_number = @phoneNumber AND country_code = @countryCode AND password_hash = @passwordHash;`
-	args := pgx.NamedArgs{
-		"phoneNumber":  mobileNumber,
-		"countryCode":  countryCode,
-		"passwordHash": password}
-
-	var userId uint64
-	err = app.Db.QueryRow(ctx, query, args).Scan(&userId)
+	passwordMatched, err := Matches(hashedPassword, passwordPlaintext)
 	if err != nil {
 		return nil, err
+	}
+
+	if !passwordMatched {
+		return nil, errors.New("User is not found")
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
@@ -108,7 +122,13 @@ func Login(
 		return nil, err
 	}
 
-	return &User{Id: userId, Token: tokenString, CountryCode: countryCode, PhoneNumber: mobileNumber}, nil
+	return &User{
+		Id:          userId,
+		Email:       email,
+		Token:       tokenString,
+		Activated:   true,
+		CountryCode: countryCode,
+		PhoneNumber: mobileNumber}, nil
 }
 
 func Create(plaintextPassword string) (password, error) {
@@ -122,21 +142,8 @@ func Create(plaintextPassword string) (password, error) {
 	return newPassword, nil
 }
 
-func (p *password) Set(plaintextPassword string) error {
-	// Cost of 12
-	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
-	if err != nil {
-		return err
-	}
-
-	p.plainttext = &plaintextPassword
-	p.hash = hash
-
-	return nil
-}
-
-func (p *password) Matches(plaintextPassword string) (bool, error) {
-	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPassword))
+func Matches(hashedPassword string, plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plaintextPassword))
 	if err != nil {
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
@@ -148,6 +155,19 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 	}
 	return true, nil
 
+}
+
+func (p *password) Set(plaintextPassword string) error {
+	// Cost of 12
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	p.plainttext = &plaintextPassword
+	p.hash = hash
+
+	return nil
 }
 
 func RenewJwt(app app.App, w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -221,7 +241,8 @@ func retrieveToken(app app.App, w http.ResponseWriter, r *http.Request) (*jwt.To
 func ValidateEmail(v *validator.Validator, email string) {
 	v.Check(strings.TrimSpace(email) != "", "email", "Email is not provided")
 	v.Check(utf8.RuneCountInString(email) <= 100, "email", "Email is too long")
-	v.Check(validator.Matches(email, validator.EmailRX), "email", "Email is not valid")
+	_, err := mail.ParseAddress(email)
+	v.Check(err == nil, "email", "Email is not valid")
 }
 
 func ValidatePlaintextPassword(v *validator.Validator, password string) {
